@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org/DTD Mapper 3.0" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="cn.edu.guet.mapper.RolePermissionMapper">
+    <resultMap id="RoleMap" type="Role">
+        <!-- 菜单自身的信息 -->
+        <id property="roleid" column="role_id"/>
+        <result property="rolename" column="role_name"/>
+        <result property="permissionname" column="permission_name"/>
+        <result property="permissionid" column="permission_id"/>
+    </resultMap>
+
+    <insert id="addrolePermission">
+        insert into role_permission(role_id, permission_id)
+        values (#{roleid}, #{permissionid})
+    </insert>
+
+    <delete id="deleteRolePermission">
+        DELETE
+        FROM role_permission
+        WHERE role_id = #{value};
+    </delete>
+    <select id="getRolePermissionList" resultMap="cn.edu.guet.mapper.RolePermissionMapper.RoleMap">
+        SELECT r.role_id,r.role_name,p.permission_name,p.permission_id
+                from role r,permission p,role_permission rp
+                WHERE r.role_id= rp.role_id
+                AND p.permission_id = rp.permission_id
+    </select>
+</mapper>

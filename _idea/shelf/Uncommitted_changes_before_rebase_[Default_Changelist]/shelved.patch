@@ -1,0 +1,774 @@
+Index: src/main/java/cn/edu/guet/dao/IUserDao.java
+===================================================================
+diff --git a/src/main/java/cn/edu/guet/dao/IUserDao.java b/src/main/java/cn/edu/guet/dao/IUserDao.java
+deleted file mode 100644
+--- a/src/main/java/cn/edu/guet/dao/IUserDao.java	(revision 1a9d0462e397008e484dd2cb3960e0e660b2faa7)
++++ /dev/null	(revision 1a9d0462e397008e484dd2cb3960e0e660b2faa7)
+@@ -1,13 +0,0 @@
+-package cn.edu.guet.dao;
+-
+-
+-import cn.edu.guet.bean.Permission;
+-import cn.edu.guet.bean.User;
+-
+-import java.util.List;
+-
+-public interface IUserDao {
+-
+-    User login(String username, String password);
+-    List<Permission> getMenuByUserId(String userId);
+-}
+Index: src/main/java/cn/edu/guet/dao/impl/UserDaoImpl.java
+===================================================================
+diff --git a/src/main/java/cn/edu/guet/dao/impl/UserDaoImpl.java b/src/main/java/cn/edu/guet/dao/impl/UserDaoImpl.java
+deleted file mode 100644
+--- a/src/main/java/cn/edu/guet/dao/impl/UserDaoImpl.java	(revision 1a9d0462e397008e484dd2cb3960e0e660b2faa7)
++++ /dev/null	(revision 1a9d0462e397008e484dd2cb3960e0e660b2faa7)
+@@ -1,106 +0,0 @@
+-package cn.edu.guet.dao.impl;
+-
+-
+-import cn.edu.guet.bean.Permission;
+-import cn.edu.guet.bean.User;
+-import cn.edu.guet.dao.IUserDao;
+-import cn.edu.guet.util.PasswordEncoder;
+-
+-import java.sql.*;
+-import java.util.ArrayList;
+-import java.util.List;
+-
+-public class UserDaoImpl implements IUserDao {
+-    @Override
+-    public User login(String username, String password) {
+-        Connection conn = null;
+-        String user = "root";// mysql的用户名
+-        String pwd = "Li123456";
+-        String url = "jdbc:mysql://localhost:3306/teashop?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true";
+-        String sql = "SELECT userid,nick_name,password,salt FROM users WHERE username=?";
+-        PreparedStatement pstmt = null;
+-        ResultSet rs = null;
+-        try {
+-            Class.forName("com.mysql.cj.jdbc.Driver");
+-            conn = DriverManager.getConnection(url, user, pwd);
+-            pstmt = conn.prepareStatement(sql);
+-            pstmt.setString(1, username);// 给占位符赋值
+-            rs = pstmt.executeQuery();
+-            if (rs.next()) {
+-                // 如果满足这个条件，说明什么？说明：用户名是正确的
+-                String encPass = rs.getString("password");
+-                String salt = rs.getString("salt");
+-
+-                PasswordEncoder encoderMd5 = new PasswordEncoder(salt, "MD5");
+-                boolean result = encoderMd5.matches(encPass, password);
+-                // result如果是真，说明密码也正确
+-                if (result) {
+-                    User loginUser=new User();
+-                    loginUser.setId(rs.getString("userid"));
+-                    loginUser.setNickName(rs.getString("nick_name"));
+-                    return  loginUser;
+-                } else {// 密码错了，返回null
+-                    return null;
+-                }
+-            }
+-        } catch (SQLException | ClassNotFoundException e) {
+-            e.printStackTrace();
+-        }finally {
+-            try {
+-                rs.close();
+-                pstmt.close();
+-                conn.close();
+-            } catch (SQLException e) {
+-                e.printStackTrace();
+-            }
+-        }
+-        return  null;
+-    }
+-
+-    @Override
+-    public List<Permission> getMenuByUserId(String userId) {
+-        Connection conn = null;
+-        String user = "root";// mysql的用户名
+-        String pwd = "Li123456";
+-        String url = "jdbc:mysql://localhost:3306/teashop?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true";
+-        String sql = "SELECT p.*\n" +
+-                "FROM user_role ur,role_permission rp,permission p\n" +
+-                "WHERE ur.role_id=rp.role_id\n" +
+-                "AND rp.permission_id=p.permission_id\n" +
+-                "AND user_id=?";
+-        PreparedStatement pstmt = null;
+-        ResultSet rs = null;
+-        List<Permission> permissionList=new ArrayList<>();
+-        try {
+-            Class.forName("com.mysql.cj.jdbc.Driver");
+-            conn = DriverManager.getConnection(url, user, pwd);
+-            pstmt = conn.prepareStatement(sql);
+-            pstmt.setString(1, userId);// 给占位符赋值
+-            rs = pstmt.executeQuery();
+-            // rs.next：游标向下移动
+-            while(rs.next()){
+-                Permission permission=new Permission();
+-                permission.setId(rs.getString("permission_id"));
+-                permission.setpId(rs.getString("pid"));
+-                permission.setName(rs.getString("permission_name"));
+-                permission.setUrl(rs.getString("url"));
+-                permission.setIcon(rs.getString("icon"));
+-                permission.setTarget(rs.getString("target"));
+-                permission.setIsParent(rs.getString("isParent"));
+-
+-                permissionList.add(permission);//把芒果放入麻袋
+-            }
+-        } catch (SQLException | ClassNotFoundException e) {
+-            e.printStackTrace();
+-        }finally {
+-            try {
+-                rs.close();
+-                pstmt.close();
+-                conn.close();
+-            } catch (SQLException e) {
+-                e.printStackTrace();
+-            }
+-        }
+-        return permissionList;//返回集合（把装满芒果的麻袋，扛到车上）
+-    }
+-}
+Index: src/main/java/cn/edu/guet/mapper/PermissionMapper.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/src/main/java/cn/edu/guet/mapper/PermissionMapper.xml b/src/main/java/cn/edu/guet/mapper/PermissionMapper.xml
+new file mode 100755
+--- /dev/null	(date 1656123031193)
++++ b/src/main/java/cn/edu/guet/mapper/PermissionMapper.xml	(date 1656123031193)
+@@ -0,0 +1,15 @@
++<?xml version="1.0" encoding="UTF-8"?>
++<!DOCTYPE mapper PUBLIC "-//mybatis.org/DTD Mapper 3.0" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
++
++<mapper namespace="cn.edu.guet.mapper.PermissionMapper">
++    <resultMap id="permissionMap" type="permission">
++
++        <id property="id" column="permission_id"/>
++        <result property="name" column="permission_name"/>
++        <result property="pId" column="pid"/>
++        <result property="url" column="url"/>
++        <result property="icon" column="icon"/>
++        <result property="target" column="target"/>
++        <result property="isParent" column="isParent"/>
++    </resultMap>
++</mapper>
+\ No newline at end of file
+Index: src/main/java/cn/edu/guet/dao/IPermissionDao.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/src/main/java/cn/edu/guet/dao/IPermissionDao.java b/src/main/java/cn/edu/guet/mapper/IPermissionDao.java
+rename from src/main/java/cn/edu/guet/dao/IPermissionDao.java
+rename to src/main/java/cn/edu/guet/mapper/IPermissionDao.java
+--- a/src/main/java/cn/edu/guet/dao/IPermissionDao.java	(revision 1a9d0462e397008e484dd2cb3960e0e660b2faa7)
++++ b/src/main/java/cn/edu/guet/mapper/IPermissionDao.java	(date 1656119838407)
+@@ -1,4 +1,4 @@
+-package cn.edu.guet.dao;
++package cn.edu.guet.mapper;
+ 
+ import cn.edu.guet.bean.Permission;
+ 
+Index: src/main/java/cn/edu/guet/mapper/PermissionMapper.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/src/main/java/cn/edu/guet/mapper/PermissionMapper.java b/src/main/java/cn/edu/guet/mapper/PermissionMapper.java
+new file mode 100644
+--- /dev/null	(date 1656122883001)
++++ b/src/main/java/cn/edu/guet/mapper/PermissionMapper.java	(date 1656122883001)
+@@ -0,0 +1,5 @@
++package cn.edu.guet.mapper;
++
++public interface PermissionMapper {
++
++}
+Index: src/main/webapp/index.html
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+><!DOCTYPE html>\n<html lang=\"en\">\n<head>\n    <meta charset=\"UTF-8\">\n    <meta http-equiv=\"X-UA-Compatible\" content=\"IE=edge\">\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n    <title>Document</title>\n    <link rel=\"stylesheet\" href=\"./css/font-awesome.css\">\n    <script src=\"https://cdn.bootcdn.net/ajax/libs/jquery/3.6.0/jquery.js\"></script>\n    <script>\n        (function () {\n\n            if (!sessionStorage.length) {\n                // 这个调用能触发目标事件，从而达到共享数据的目的\n                localStorage.setItem('getSessionStorage', Date.now());\n            }\n            ;\n\n            // 该事件是核心\n            window.addEventListener('storage', function (event) {\n                if (event.key == 'getSessionStorage') {\n                    // 已存在的标签页会收到这个事件\n                    console.log(\"ccccccc: \", sessionStorage);\n                    localStorage.setItem('sessionStorage', JSON.stringify(sessionStorage));\n                    localStorage.removeItem('sessionStorage');\n\n                } else if (event.key == 'sessionStorage' && !sessionStorage.length) {\n                    // 新开启的标签页会收到这个事件\n                    var data = JSON.parse(event.newValue),\n                        value;\n\n                    for (key in data) {\n                        sessionStorage.setItem(key, data[key]);\n                    }\n                }\n            });\n        })();\n        $(function () {\n\n            console.log(\"用户ID：\" + sessionStorage.getItem(\"id\"))\n            console.log(\"用户昵称：\" + sessionStorage.getItem(\"nick_name\"))\n\n            $(\"#header\").html(sessionStorage.getItem(\"nick_name\"));\n            // 用ajax异步获取菜单\n            $.ajax({\n                type: \"get\",\n                url: \"getUserPermission.do\",\n                data: {\"userId\": sessionStorage.getItem(\"id\")},\n                dataType: \"json\",\n                success: function (data) {\n                    var arr = new Array();\n                    $.each(data, function (i, permission) {\n                        if (permission.pId) {\n                            arr.push(permission);\n                        }\n                    })\n                    console.log(arr);\n                    $.each(data, function (i, permission) {\n                        if (!permission.pId) {\n                            var $li = $(\"<li>\");\n                            var $a = $(\"<a>\");\n                            $a.html(permission.name);//设置超链接的名称，例如：name是首页\n                            var $i = $(\"<i>\");\n                            $i.addClass(\"fa \" + permission.icon);\n\n                            $a.prepend($i);\n                            $li.append($a);\n                            var $second = $(\"<ul class=\\\"submenu\\\"></ul>\");\n                            $.each(arr, function (i, secondPer) {\n                                if (secondPer.pId == permission.id) {\n                                    var $ll = \"<li><a href='\" + secondPer.url + \"' target='\" + secondPer.target + \"'>\" +\n                                        secondPer.name +\n                                        \"</a></li>\";\n                                    $second.append($ll);\n                                    $li.append($second);\n                                }\n                            })\n                            $(\".menu\").append($li);\n                        }\n                    });\n                    $(\".menu>li a\").click(function () {\n                        $(this).next().toggle(300);\n                    })\n                }\n            });\n        })\n    </script>\n    <style>\n        /* 清屏 */\n        * {\n            margin: 0;\n            padding: 0;\n        }\n\n        #header {\n            background-color: antiquewhite;\n            width: 100%;\n            height: 100px;\n        }\n\n        #main {\n            background-color: aquamarine;\n            width: 100%;\n            height: 800px;\n        }\n\n        #aside {\n            width: 15%;\n            background-color: burlywood;\n            height: 100%;\n            float: left;\n        }\n\n        #content {\n            width: 85%;\n            height: 100%;\n            background-color: orchid;\n            float: left;\n        }\n\n        /***************sideBar*********************/\n        li {\n            list-style: none;\n            position: relative;\n            border-style: solid;\n            border-width: 1px 0 0;\n            border-color: #E5E5E5;\n        }\n\n        .submenu > li {\n            position: relative;\n            padding-left: 40px;\n        }\n\n        a {\n            display: block;\n            width: 189px;\n            height: 36px;\n            color: #5d5d5d;\n            text-decoration: none;\n            line-height: 36px;\n        }\n\n        .fa {\n            display: inline-block;\n            margin-left: 14px;\n            margin-right: 14px;\n            font-family: 'FontAwesome';\n            font-weight: normal;\n            font-style: normal;\n        }\n\n        .submenu {\n            display: none;\n            position: relative;\n        }\n\n        .submenu:before {\n            content: \"\";\n            display: block;\n            position: absolute;\n            z-index: 1;\n            left: 18px;\n            top: 0;\n            bottom: 0;\n            border: 1px dotted;\n            border-width: 0 0 0 1px; /* 上 右 下 左 */\n        }\n\n        .submenu > li:before {\n            content: \"\";\n            display: block;\n            width: 19px;\n            position: absolute;\n            z-index: 1;\n            left: 20px;\n            top: 17px;\n            border: 1px dotted;\n            border-width: 1px 0 0; /* 上 右 下*/\n        }\n    </style>\n</head>\n<body>\n<div>\n    <div id=\"header\">\n    </div>\n    <div id=\"main\">\n        <div id=\"aside\">\n            <!-- 外层ul固定 -->\n            <ul class=\"menu\">\n\n            </ul>\n        </div>\n        <div id=\"content\">\n            <iframe src=\"\" frameborder=\"0\" width=\"100%\" height=\"100%\" name=\"content\"></iframe>\n        </div>\n    </div>\n</div>\n</body>\n</html>
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/src/main/webapp/index.html b/src/main/webapp/index.html
+--- a/src/main/webapp/index.html	(revision 1a9d0462e397008e484dd2cb3960e0e660b2faa7)
++++ b/src/main/webapp/index.html	(date 1656122574651)
+@@ -48,13 +48,13 @@
+                 data: {"userId": sessionStorage.getItem("id")},
+                 dataType: "json",
+                 success: function (data) {
++                    console.log(data);
+                     var arr = new Array();
+                     $.each(data, function (i, permission) {
+                         if (permission.pId) {
+                             arr.push(permission);
+                         }
+                     })
+-                    console.log(arr);
+                     $.each(data, function (i, permission) {
+                         if (!permission.pId) {
+                             var $li = $("<li>");
+Index: src/main/java/cn/edu/guet/dao/impl/PermissionDaoImpl.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/src/main/java/cn/edu/guet/dao/impl/PermissionDaoImpl.java b/src/main/java/cn/edu/guet/mapper/impl/PermissionDaoImpl.java
+rename from src/main/java/cn/edu/guet/dao/impl/PermissionDaoImpl.java
+rename to src/main/java/cn/edu/guet/mapper/impl/PermissionDaoImpl.java
+--- a/src/main/java/cn/edu/guet/dao/impl/PermissionDaoImpl.java	(revision 1a9d0462e397008e484dd2cb3960e0e660b2faa7)
++++ b/src/main/java/cn/edu/guet/mapper/impl/PermissionDaoImpl.java	(date 1656119838406)
+@@ -1,7 +1,7 @@
+-package cn.edu.guet.dao.impl;
++package cn.edu.guet.mapper.impl;
+ 
+ import cn.edu.guet.bean.Permission;
+-import cn.edu.guet.dao.IPermissionDao;
++import cn.edu.guet.mapper.IPermissionDao;
+ 
+ import java.sql.*;
+ import java.util.ArrayList;
+Index: src/main/java/cn/edu/guet/util/MyBatisSqlSessionFactory.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/src/main/java/cn/edu/guet/util/MyBatisSqlSessionFactory.java b/src/main/java/cn/edu/guet/util/MyBatisSqlSessionFactory.java
+new file mode 100644
+--- /dev/null	(date 1656123337725)
++++ b/src/main/java/cn/edu/guet/util/MyBatisSqlSessionFactory.java	(date 1656123337725)
+@@ -0,0 +1,31 @@
++package cn.edu.guet.util;
++
++import org.apache.ibatis.session.SqlSessionFactory;
++import org.apache.ibatis.session.SqlSessionFactoryBuilder;
++
++import java.io.InputStream;
++
++public class MyBatisSqlSessionFactory {
++    /*
++    获取Session
++     */
++    public static MyBatisSqlSessionFactory instance=new MyBatisSqlSessionFactory();
++    private SqlSessionFactory sqlSessionFactory;
++    private MyBatisSqlSessionFactory(){
++        InputStream in = null;
++        try {
++            in = Class.forName("cn.edu.guet.util.MyBatisSqlSessionFactory")
++                    .getResourceAsStream("/mybatis-config.xml");
++        } catch (ClassNotFoundException e) {
++            e.printStackTrace();
++        }
++        SqlSessionFactoryBuilder builder = new SqlSessionFactoryBuilder();
++        sqlSessionFactory = builder.build(in);
++    }
++    public static MyBatisSqlSessionFactory getInstance(){
++        return instance;
++    }
++    public SqlSessionFactory getSqlSessionFactory(){
++        return sqlSessionFactory;
++    }
++}
+Index: src/main/java/cn/edu/guet/bean/User.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>package cn.edu.guet.bean;\n\nimport java.util.Objects;\n\npublic class User {\n    private String id;\n    private String nickName;\n\n    public String getId() {\n        return id;\n    }\n\n    public void setId(String id) {\n        this.id = id;\n    }\n\n    public String getNickName() {\n        return nickName;\n    }\n\n    public void setNickName(String nickName) {\n        this.nickName = nickName;\n    }\n\n    @Override\n    public boolean equals(Object o) {\n        if (this == o) return true;\n        if (o == null || getClass() != o.getClass()) return false;\n        User user = (User) o;\n        return Objects.equals(id, user.id) && Objects.equals(nickName, user.nickName);\n    }\n\n    @Override\n    public int hashCode() {\n        return Objects.hash(id, nickName);\n    }\n\n    @Override\n    public String toString() {\n        return \"User{\" +\n                \"id='\" + id + '\\'' +\n                \", nickName='\" + nickName + '\\'' +\n                '}';\n    }\n}\n
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/src/main/java/cn/edu/guet/bean/User.java b/src/main/java/cn/edu/guet/bean/User.java
+--- a/src/main/java/cn/edu/guet/bean/User.java	(revision 1a9d0462e397008e484dd2cb3960e0e660b2faa7)
++++ b/src/main/java/cn/edu/guet/bean/User.java	(date 1656121111448)
+@@ -1,17 +1,30 @@
+ package cn.edu.guet.bean;
+ 
++import java.io.Serializable;
+ import java.util.Objects;
+ 
+-public class User {
+-    private String id;
++public class User implements Serializable {
++
++    private String userId;
++    private String username;
+     private String nickName;
++    private String password;
++    private String salt;
++
++    public String getUserId() {
++        return userId;
++    }
++
++    public void setUserId(String userId) {
++        this.userId = userId;
++    }
+ 
+-    public String getId() {
+-        return id;
++    public String getUsername() {
++        return username;
+     }
+ 
+-    public void setId(String id) {
+-        this.id = id;
++    public void setUsername(String username) {
++        this.username = username;
+     }
+ 
+     public String getNickName() {
+@@ -22,24 +35,43 @@
+         this.nickName = nickName;
+     }
+ 
++    public String getPassword() {
++        return password;
++    }
++
++    public void setPassword(String password) {
++        this.password = password;
++    }
++
++    public String getSalt() {
++        return salt;
++    }
++
++    public void setSalt(String salt) {
++        this.salt = salt;
++    }
++
+     @Override
+     public boolean equals(Object o) {
+         if (this == o) return true;
+         if (o == null || getClass() != o.getClass()) return false;
+         User user = (User) o;
+-        return Objects.equals(id, user.id) && Objects.equals(nickName, user.nickName);
++        return Objects.equals(userId, user.userId) && Objects.equals(username, user.username) && Objects.equals(nickName, user.nickName) && Objects.equals(password, user.password) && Objects.equals(salt, user.salt);
+     }
+ 
+     @Override
+     public int hashCode() {
+-        return Objects.hash(id, nickName);
++        return Objects.hash(userId, username, nickName, password, salt);
+     }
+ 
+     @Override
+     public String toString() {
+         return "User{" +
+-                "id='" + id + '\'' +
++                "userId='" + userId + '\'' +
++                ", username='" + username + '\'' +
+                 ", nickName='" + nickName + '\'' +
++                ", password='" + password + '\'' +
++                ", salt='" + salt + '\'' +
+                 '}';
+     }
+ }
+Index: src/main/java/cn/edu/guet/bean/Permission.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>package cn.edu.guet.bean;\n\nimport java.util.Objects;\n\npublic class Permission {\n    private String id;\n    private String pId;\n    private String name;\n    private String url;\n    private String icon;\n    private String target;\n    private String isParent;\n\n    public String getId() {\n        return id;\n    }\n\n    public void setId(String id) {\n        this.id = id;\n    }\n\n    public String getpId() {\n        return pId;\n    }\n\n    public void setpId(String pId) {\n        this.pId = pId;\n    }\n\n    public String getName() {\n        return name;\n    }\n\n    public void setName(String name) {\n        this.name = name;\n    }\n\n    public String getUrl() {\n        return url;\n    }\n\n    public void setUrl(String url) {\n        this.url = url;\n    }\n\n    public String getIcon() {\n        return icon;\n    }\n\n    public void setIcon(String icon) {\n        this.icon = icon;\n    }\n\n    public String getTarget() {\n        return target;\n    }\n\n    public void setTarget(String target) {\n        this.target = target;\n    }\n\n    public String getIsParent() {\n        return isParent;\n    }\n\n    public void setIsParent(String isParent) {\n        this.isParent = isParent;\n    }\n\n    @Override\n    public String toString() {\n        return \"Permission{\" +\n                \"id='\" + id + '\\'' +\n                \", pId='\" + pId + '\\'' +\n                \", name='\" + name + '\\'' +\n                \", url='\" + url + '\\'' +\n                \", icon='\" + icon + '\\'' +\n                \", target='\" + target + '\\'' +\n                \", isParent='\" + isParent + '\\'' +\n                '}';\n    }\n\n    @Override\n    public boolean equals(Object o) {\n        if (this == o) return true;\n        if (o == null || getClass() != o.getClass()) return false;\n        Permission that = (Permission) o;\n        return Objects.equals(id, that.id) && Objects.equals(pId, that.pId) && Objects.equals(name, that.name) && Objects.equals(url, that.url) && Objects.equals(icon, that.icon) && Objects.equals(target, that.target) && Objects.equals(isParent, that.isParent);\n    }\n\n    @Override\n    public int hashCode() {\n        return Objects.hash(id, pId, name, url, icon, target, isParent);\n    }\n}\n
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/src/main/java/cn/edu/guet/bean/Permission.java b/src/main/java/cn/edu/guet/bean/Permission.java
+--- a/src/main/java/cn/edu/guet/bean/Permission.java	(revision 1a9d0462e397008e484dd2cb3960e0e660b2faa7)
++++ b/src/main/java/cn/edu/guet/bean/Permission.java	(date 1656122523564)
+@@ -3,6 +3,7 @@
+ import java.util.Objects;
+ 
+ public class Permission {
++
+     private String id;
+     private String pId;
+     private String name;
+Index: src/main/java/cn/edu/guet/service/impl/PermissionServiceImpl.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>package cn.edu.guet.service.impl;\n\nimport cn.edu.guet.bean.Permission;\nimport cn.edu.guet.dao.IPermissionDao;\nimport cn.edu.guet.dao.impl.PermissionDaoImpl;\nimport cn.edu.guet.service.IPermissionService;\n\nimport java.util.List;\n\npublic class PermissionServiceImpl implements IPermissionService {\n    @Override\n    public List<Permission> permissionList() {\n        IPermissionDao permissionDao=new PermissionDaoImpl();\n\n        return permissionDao.permissionList();\n    }\n}\n
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/src/main/java/cn/edu/guet/service/impl/PermissionServiceImpl.java b/src/main/java/cn/edu/guet/service/impl/PermissionServiceImpl.java
+--- a/src/main/java/cn/edu/guet/service/impl/PermissionServiceImpl.java	(revision 1a9d0462e397008e484dd2cb3960e0e660b2faa7)
++++ b/src/main/java/cn/edu/guet/service/impl/PermissionServiceImpl.java	(date 1656119838402)
+@@ -1,8 +1,8 @@
+ package cn.edu.guet.service.impl;
+ 
+ import cn.edu.guet.bean.Permission;
+-import cn.edu.guet.dao.IPermissionDao;
+-import cn.edu.guet.dao.impl.PermissionDaoImpl;
++import cn.edu.guet.mapper.IPermissionDao;
++import cn.edu.guet.mapper.impl.PermissionDaoImpl;
+ import cn.edu.guet.service.IPermissionService;
+ 
+ import java.util.List;
+Index: src/main/java/cn/edu/guet/service/impl/UserServiceImpl.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>package cn.edu.guet.service.impl;\n\nimport cn.edu.guet.bean.Permission;\nimport cn.edu.guet.bean.User;\nimport cn.edu.guet.dao.IUserDao;\nimport cn.edu.guet.dao.impl.UserDaoImpl;\nimport cn.edu.guet.service.IUserService;\n\nimport java.util.List;\n\npublic class UserServiceImpl implements IUserService {\n    @Override\n    public User login(String username, String password) {\n        IUserDao userDao = new UserDaoImpl();\n        return userDao.login(username, password);\n    }\n\n    @Override\n    public List<Permission> getMenuByUserId(String userId) {\n        IUserDao userDao = new UserDaoImpl();\n        return userDao.getMenuByUserId(userId);\n    }\n}\n
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/src/main/java/cn/edu/guet/service/impl/UserServiceImpl.java b/src/main/java/cn/edu/guet/service/impl/UserServiceImpl.java
+--- a/src/main/java/cn/edu/guet/service/impl/UserServiceImpl.java	(revision 1a9d0462e397008e484dd2cb3960e0e660b2faa7)
++++ b/src/main/java/cn/edu/guet/service/impl/UserServiceImpl.java	(date 1656123486148)
+@@ -2,22 +2,50 @@
+ 
+ import cn.edu.guet.bean.Permission;
+ import cn.edu.guet.bean.User;
+-import cn.edu.guet.dao.IUserDao;
+-import cn.edu.guet.dao.impl.UserDaoImpl;
++import cn.edu.guet.mapper.UserMapper;
+ import cn.edu.guet.service.IUserService;
+-
++import cn.edu.guet.util.MyBatisSqlSessionFactory;
++import cn.edu.guet.util.PasswordEncoder;
++import org.apache.ibatis.session.SqlSession;
++import org.apache.ibatis.session.SqlSessionFactory;
+ import java.util.List;
+ 
+ public class UserServiceImpl implements IUserService {
++
++    SqlSessionFactory sqlSessionFactory;
++
++    public UserServiceImpl() {
++        sqlSessionFactory= MyBatisSqlSessionFactory.instance.getSqlSessionFactory();
++        System.out.println("单例："+sqlSessionFactory.hashCode());
++    }
++
+     @Override
+     public User login(String username, String password) {
+-        IUserDao userDao = new UserDaoImpl();
+-        return userDao.login(username, password);
++        SqlSession sqlSession = sqlSessionFactory.openSession();
++        UserMapper userMapper = sqlSession.getMapper(UserMapper.class);
++        User user = userMapper.login(username, password);
++        // 密码规则的匹配
++        if (user != null) {
++            // 说明用户名是正确的
++            String encPass = user.getPassword();
++            String salt = user.getSalt();
++
++            PasswordEncoder encoderMd5 = new PasswordEncoder(salt, "MD5");
++            boolean result = encoderMd5.matches(encPass, password);
++            // result如果是真，说明密码也正确
++            if (result) {
++                return user;
++            }
++        }
++        sqlSession.close();
++        return null;
+     }
+ 
+     @Override
+     public List<Permission> getMenuByUserId(String userId) {
+-        IUserDao userDao = new UserDaoImpl();
+-        return userDao.getMenuByUserId(userId);
++        SqlSession sqlSession = sqlSessionFactory.openSession();
++        UserMapper userMapper = sqlSession.getMapper(UserMapper.class);
++        List<Permission> permissionList = userMapper.getMenuByUserId(userId);
++        return permissionList;
+     }
+ }
+Index: pom.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+><?xml version=\"1.0\" encoding=\"UTF-8\"?>\r\n\r\n<project xmlns=\"http://maven.apache.org/POM/4.0.0\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\r\n         xsi:schemaLocation=\"http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd\">\r\n    <modelVersion>4.0.0</modelVersion>\r\n\r\n    <groupId>cn.edu.guet</groupId>\r\n    <artifactId>springmvc</artifactId>\r\n    <version>1.0</version>\r\n    <packaging>war</packaging>\r\n\r\n    <name>springmvc Maven Webapp</name>\r\n    <!-- FIXME change it to the project's website -->\r\n    <url>http://www.example.com</url>\r\n\r\n    <properties>\r\n        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>\r\n        <maven.compiler.source>1.8</maven.compiler.source>\r\n        <maven.compiler.target>1.8</maven.compiler.target>\r\n    </properties>\r\n\r\n    <dependencies>\r\n        <dependency>\r\n            <groupId>junit</groupId>\r\n            <artifactId>junit</artifactId>\r\n            <version>4.11</version>\r\n            <scope>test</scope>\r\n        </dependency>\r\n        <!-- https://mvnrepository.com/artifact/mysql/mysql-connector-java -->\r\n        <dependency>\r\n            <groupId>mysql</groupId>\r\n            <artifactId>mysql-connector-java</artifactId>\r\n            <version>8.0.21</version>\r\n        </dependency>\r\n        <dependency>\r\n            <groupId>org.apache.commons</groupId>\r\n            <artifactId>commons-lang3</artifactId>\r\n            <version>3.9</version>\r\n        </dependency>\r\n        <dependency>\r\n            <groupId>commons-beanutils</groupId>\r\n            <artifactId>commons-beanutils</artifactId>\r\n            <version>1.9.2</version>\r\n        </dependency>\r\n        <!-- https://mvnrepository.com/artifact/javax.servlet/javax.servlet-api -->\r\n        <dependency>\r\n            <groupId>javax.servlet</groupId>\r\n            <artifactId>javax.servlet-api</artifactId>\r\n            <version>4.0.1</version>\r\n            <scope>provided</scope>\r\n        </dependency>\r\n        <!-- https://mvnrepository.com/artifact/dom4j/dom4j -->\r\n        <dependency>\r\n            <groupId>dom4j</groupId>\r\n            <artifactId>dom4j</artifactId>\r\n            <version>1.6.1</version>\r\n        </dependency>\r\n        <dependency>\r\n            <groupId>jaxen</groupId>\r\n            <artifactId>jaxen</artifactId>\r\n            <version>1.2.0</version>\r\n        </dependency>\r\n        <dependency>\r\n            <groupId>com.thetransactioncompany</groupId>\r\n            <artifactId>java-property-utils</artifactId>\r\n            <version>1.9.1</version>\r\n        </dependency>\r\n        <dependency>\r\n            <groupId>com.google.code.gson</groupId>\r\n            <artifactId>gson</artifactId>\r\n            <version>2.6.2</version>\r\n        </dependency>\r\n        <dependency>\r\n            <groupId>com.thetransactioncompany</groupId>\r\n            <artifactId>cors-filter</artifactId>\r\n            <version>2.5</version>\r\n        </dependency>\r\n        <dependency>\r\n            <groupId>org.apache.directory.studio</groupId>\r\n            <artifactId>org.apache.commons.codec</artifactId>\r\n            <version>1.8</version>\r\n        </dependency>\r\n        <dependency>\r\n            <groupId>com.google.code.gson</groupId>\r\n            <artifactId>gson</artifactId>\r\n            <version>2.9.0</version>\r\n        </dependency>\r\n        <dependency>\r\n            <groupId>commons-fileupload</groupId>\r\n            <artifactId>commons-fileupload</artifactId>\r\n            <version>1.3.1</version>\r\n        </dependency>\r\n        <dependency>\r\n            <groupId>commons-io</groupId>\r\n            <artifactId>commons-io</artifactId>\r\n            <version>2.4</version>\r\n        </dependency>\r\n    </dependencies>\r\n\r\n    <build>\r\n        <finalName>springmvc</finalName>\r\n        <resources>\r\n            <resource>\r\n                <directory>src/main/java</directory>\r\n                <includes>\r\n                    <include>**/*.*</include>\r\n                </includes>\r\n            </resource>\r\n            <resource>\r\n                <directory>src/main/resources</directory>\r\n                <includes>\r\n                    <include>**/*.*</include>\r\n                </includes>\r\n            </resource>\r\n            <resource>\r\n                <directory>src/main/resources</directory>\r\n                <includes>\r\n                    <include>**/*.xml</include>\r\n                </includes>\r\n            </resource>\r\n        </resources>\r\n        <pluginManagement><!-- lock down plugins versions to avoid using Maven defaults (may be moved to parent pom) -->\r\n            <plugins>\r\n                <plugin>\r\n                    <artifactId>maven-clean-plugin</artifactId>\r\n                    <version>3.1.0</version>\r\n                </plugin>\r\n                <!-- see http://maven.apache.org/ref/current/maven-core/default-bindings.html#Plugin_bindings_for_war_packaging -->\r\n                <plugin>\r\n                    <artifactId>maven-resources-plugin</artifactId>\r\n                    <version>3.0.2</version>\r\n                </plugin>\r\n                <plugin>\r\n                    <artifactId>maven-compiler-plugin</artifactId>\r\n                    <version>3.8.0</version>\r\n                </plugin>\r\n                <plugin>\r\n                    <artifactId>maven-surefire-plugin</artifactId>\r\n                    <version>2.22.1</version>\r\n                </plugin>\r\n                <plugin>\r\n                    <artifactId>maven-war-plugin</artifactId>\r\n                    <version>3.2.2</version>\r\n                </plugin>\r\n                <plugin>\r\n                    <artifactId>maven-install-plugin</artifactId>\r\n                    <version>2.5.2</version>\r\n                </plugin>\r\n                <plugin>\r\n                    <artifactId>maven-deploy-plugin</artifactId>\r\n                    <version>2.8.2</version>\r\n                </plugin>\r\n                <plugin>\r\n                    <groupId>org.apache.maven.plugins</groupId>\r\n                    <artifactId>maven-compiler-plugin</artifactId>\r\n                    <configuration>\r\n                        <source>1.8</source>\r\n                        <target>1.8</target>\r\n                        <compilerArgs>\r\n                            <arg>-parameters</arg>\r\n                        </compilerArgs>\r\n                    </configuration>\r\n                </plugin>\r\n            </plugins>\r\n        </pluginManagement>\r\n    </build>\r\n</project>\r\n
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/pom.xml b/pom.xml
+--- a/pom.xml	(revision 1a9d0462e397008e484dd2cb3960e0e660b2faa7)
++++ b/pom.xml	(date 1656119586854)
+@@ -66,11 +66,6 @@
+             <version>1.9.1</version>
+         </dependency>
+         <dependency>
+-            <groupId>com.google.code.gson</groupId>
+-            <artifactId>gson</artifactId>
+-            <version>2.6.2</version>
+-        </dependency>
+-        <dependency>
+             <groupId>com.thetransactioncompany</groupId>
+             <artifactId>cors-filter</artifactId>
+             <version>2.5</version>
+@@ -94,6 +89,16 @@
+             <groupId>commons-io</groupId>
+             <artifactId>commons-io</artifactId>
+             <version>2.4</version>
++        </dependency>
++        <dependency>
++            <groupId>org.mybatis</groupId>
++            <artifactId>mybatis</artifactId>
++            <version>3.5.9</version>
++        </dependency>
++        <dependency>
++            <groupId>org.apache.logging.log4j</groupId>
++            <artifactId>log4j-core</artifactId>
++            <version>2.17.0</version>
+         </dependency>
+     </dependencies>
+ 
+Index: src/main/webapp/login.html
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+><!DOCTYPE html>\n<html lang=\"en\">\n<head>\n    <meta charset=\"UTF-8\">\n    <title>登录</title>\n    <script src=\"https://cdn.bootcdn.net/ajax/libs/jquery/3.6.0/jquery.js\"></script>\n</head>\n<body>\n    <!--    同步方式实现登录-->\n    <!-- <form action=\"login.do\" method=\"post\">\n        <label for=\"username\">用户名：</label>\n        <input type=\"text\" name=\"username\" id=\"username\">\n\n        <label for=\"password\">密码：</label>\n        <input type=\"text\" name=\"password\" id=\"password\">\n\n        <input type=\"submit\" value=\"登录\">\n    </form>\n    -->\n    <!-- 异步方式实现登录 -->\n    <label for=\"username\">用户名：</label>\n    <input type=\"text\" name=\"username\" id=\"username\">\n\n    <label for=\"password\">密码：</label>\n    <input type=\"text\" name=\"password\" id=\"password\">\n\n    <button id=\"login-bt\">登录</button>\n    <script>\n        $(function(){\n            $(\"#login-bt\").click(function() {\n                // 把username和password拿到\n                var username=$(\"#username\").val();\n                var password=$(\"#password\").val();\n                $.ajax({\n                    type: \"POST\",\n                    url: \"login.do\",\n                    data: {\"username\":username,\"password\":password},\n                    dataType: \"json\",\n                    success: function (response) {\n                        console.log('服务器返回的数据：',response);\n                        sessionStorage.setItem(\"id\",response.id);//浏览器关掉，数据消失\n                        sessionStorage.setItem(\"nick_name\",response.nickName);\n                        window.location.href=\"index.html\";\n                    }\n                });\n            })\n        })\n    </script>\n</body>\n</html>
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/src/main/webapp/login.html b/src/main/webapp/login.html
+--- a/src/main/webapp/login.html	(revision 1a9d0462e397008e484dd2cb3960e0e660b2faa7)
++++ b/src/main/webapp/login.html	(date 1656122306417)
+@@ -38,7 +38,7 @@
+                     dataType: "json",
+                     success: function (response) {
+                         console.log('服务器返回的数据：',response);
+-                        sessionStorage.setItem("id",response.id);//浏览器关掉，数据消失
++                        sessionStorage.setItem("id",response.userId);//浏览器关掉，数据消失
+                         sessionStorage.setItem("nick_name",response.nickName);
+                         window.location.href="index.html";
+                     }
+Index: .idea/workspace.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+><?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<project version=\"4\">\n  <component name=\"ArtifactsWorkspaceSettings\">\n    <artifacts-to-build>\n      <artifact name=\"SpringMVC:war\" />\n    </artifacts-to-build>\n  </component>\n  <component name=\"AutoImportSettings\">\n    <option name=\"autoReloadType\" value=\"ALL\" />\n  </component>\n  <component name=\"ChangeListManager\">\n    <list default=\"true\" id=\"77272ff9-72ae-472a-8b39-1585fecd1d9b\" name=\"Default Changelist\" comment=\"1、动态显示菜单&#10;2、左侧菜单栏的点击，右侧显示具体内容\" />\n    <option name=\"SHOW_DIALOG\" value=\"false\" />\n    <option name=\"HIGHLIGHT_CONFLICTS\" value=\"true\" />\n    <option name=\"HIGHLIGHT_NON_ACTIVE_CHANGELIST\" value=\"false\" />\n    <option name=\"LAST_RESOLUTION\" value=\"IGNORE\" />\n  </component>\n  <component name=\"FileTemplateManagerImpl\">\n    <option name=\"RECENT_TEMPLATES\">\n      <list>\n        <option value=\"AnnotationType\" />\n        <option value=\"Jsp File\" />\n        <option value=\"Interface\" />\n        <option value=\"Class\" />\n        <option value=\"HTML File\" />\n      </list>\n    </option>\n  </component>\n  <component name=\"Git.Settings\">\n    <option name=\"RECENT_BRANCH_BY_REPOSITORY\">\n      <map>\n        <entry key=\"$PROJECT_DIR$\" value=\"06-09\" />\n      </map>\n    </option>\n    <option name=\"RECENT_GIT_ROOT_PATH\" value=\"$PROJECT_DIR$\" />\n    <option name=\"RESET_MODE\" value=\"HARD\" />\n    <option name=\"ROOT_SYNC\" value=\"DONT_SYNC\" />\n  </component>\n  <component name=\"GitSEFilterConfiguration\">\n    <file-type-list>\n      <filtered-out-file-type name=\"LOCAL_BRANCH\" />\n      <filtered-out-file-type name=\"REMOTE_BRANCH\" />\n      <filtered-out-file-type name=\"TAG\" />\n      <filtered-out-file-type name=\"COMMIT_BY_MESSAGE\" />\n    </file-type-list>\n  </component>\n  <component name=\"LogFilters\">\n    <option name=\"FILTER_ERRORS\" value=\"false\" />\n    <option name=\"FILTER_WARNINGS\" value=\"false\" />\n    <option name=\"FILTER_INFO\" value=\"true\" />\n    <option name=\"FILTER_DEBUG\" value=\"true\" />\n    <option name=\"CUSTOM_FILTER\" />\n  </component>\n  <component name=\"MavenImportPreferences\">\n    <option name=\"generalSettings\">\n      <MavenGeneralSettings>\n        <option name=\"mavenHome\" value=\"/Applications/apache-maven-3.8.4\" />\n        <option name=\"userSettingsFile\" value=\"/Applications/apache-maven-3.8.4/conf/settings.xml\" />\n      </MavenGeneralSettings>\n    </option>\n  </component>\n  <component name=\"ProjectId\" id=\"1h4ToCBdbZM7uJfUYYthyIiZDM1\" />\n  <component name=\"ProjectLevelVcsManager\" settingsEditedManually=\"true\">\n    <ConfirmationsSetting value=\"2\" id=\"Add\" />\n  </component>\n  <component name=\"ProjectViewState\">\n    <option name=\"hideEmptyMiddlePackages\" value=\"true\" />\n    <option name=\"showLibraryContents\" value=\"true\" />\n  </component>\n  <component name=\"PropertiesComponent\">\n    <property name=\"ASKED_ADD_EXTERNAL_FILES\" value=\"true\" />\n    <property name=\"DefaultHtmlFileTemplate\" value=\"HTML File\" />\n    <property name=\"MyBatisLogPluginparameters\" value=\"Parameters:\" />\n    <property name=\"MyBatisLogPluginpreparing\" value=\"Preparing:\" />\n    <property name=\"MyBatisLogPluginrunning\" value=\"true\" />\n    <property name=\"RunOnceActivity.OpenProjectViewOnStart\" value=\"true\" />\n    <property name=\"RunOnceActivity.ShowReadmeOnStart\" value=\"true\" />\n    <property name=\"SHARE_PROJECT_CONFIGURATION_FILES\" value=\"true\" />\n    <property name=\"WebServerToolWindowFactoryState\" value=\"false\" />\n    <property name=\"aspect.path.notification.shown\" value=\"true\" />\n    <property name=\"last_opened_file_path\" value=\"$PROJECT_DIR$/src/main/java/cn/edu/guet/bean\" />\n    <property name=\"nodejs_package_manager_path\" value=\"npm\" />\n    <property name=\"project.structure.last.edited\" value=\"Project\" />\n    <property name=\"project.structure.proportion\" value=\"0.15\" />\n    <property name=\"project.structure.side.proportion\" value=\"0.2\" />\n    <property name=\"settings.editor.selected.configurable\" value=\"project.propVCSSupport.Mappings\" />\n    <property name=\"vue.rearranger.settings.migration\" value=\"true\" />\n  </component>\n  <component name=\"RecentsManager\">\n    <key name=\"CopyFile.RECENT_KEYS\">\n      <recent name=\"$PROJECT_DIR$/src/main/java/cn/edu/guet/bean\" />\n      <recent name=\"$PROJECT_DIR$/src/main/webapp\" />\n      <recent name=\"$PROJECT_DIR$/src/main/java/cn/edu/guet/util\" />\n      <recent name=\"$PROJECT_DIR$/src/main/java/cn/edu/guet/service\" />\n      <recent name=\"$PROJECT_DIR$/src/main/java/cn/edu/guet/dao\" />\n    </key>\n    <key name=\"CopyClassDialog.RECENTS_KEY\">\n      <recent name=\"cn.edu.guet.util\" />\n    </key>\n  </component>\n  <component name=\"RunManager\">\n    <configuration name=\"Tomcat 9.0.56\" type=\"#com.intellij.j2ee.web.tomcat.TomcatRunConfigurationFactory\" factoryName=\"Local\" APPLICATION_SERVER_NAME=\"Tomcat 9.0.56\" ALTERNATIVE_JRE_ENABLED=\"false\" nameIsGenerated=\"true\">\n      <option name=\"OPEN_IN_BROWSER_URL\" value=\"http://localhost:8080/SpringMVC/login.html\" />\n      <option name=\"UPDATING_POLICY\" value=\"restart-server\" />\n      <deployment>\n        <artifact name=\"SpringMVC:war\">\n          <settings>\n            <option name=\"CONTEXT_PATH\" value=\"/SpringMVC\" />\n          </settings>\n        </artifact>\n      </deployment>\n      <server-settings>\n        <option name=\"BASE_DIRECTORY_NAME\" value=\"67416c4f-86ec-458a-9fb6-1ab572b862bc\" />\n      </server-settings>\n      <predefined_log_file enabled=\"true\" id=\"Tomcat\" />\n      <predefined_log_file enabled=\"true\" id=\"Tomcat Catalina\" />\n      <predefined_log_file id=\"Tomcat Manager\" />\n      <predefined_log_file id=\"Tomcat Host Manager\" />\n      <predefined_log_file id=\"Tomcat Localhost Access\" />\n      <RunnerSettings RunnerId=\"Debug\">\n        <option name=\"DEBUG_PORT\" value=\"59513\" />\n      </RunnerSettings>\n      <ConfigurationWrapper VM_VAR=\"JAVA_OPTS\" RunnerId=\"Cover\">\n        <option name=\"USE_ENV_VARIABLES\" value=\"true\" />\n        <STARTUP>\n          <option name=\"USE_DEFAULT\" value=\"true\" />\n          <option name=\"SCRIPT\" value=\"\" />\n          <option name=\"VM_PARAMETERS\" value=\"\" />\n          <option name=\"PROGRAM_PARAMETERS\" value=\"\" />\n        </STARTUP>\n        <SHUTDOWN>\n          <option name=\"USE_DEFAULT\" value=\"true\" />\n          <option name=\"SCRIPT\" value=\"\" />\n          <option name=\"VM_PARAMETERS\" value=\"\" />\n          <option name=\"PROGRAM_PARAMETERS\" value=\"\" />\n        </SHUTDOWN>\n      </ConfigurationWrapper>\n      <ConfigurationWrapper VM_VAR=\"JAVA_OPTS\" RunnerId=\"Debug\">\n        <option name=\"USE_ENV_VARIABLES\" value=\"true\" />\n        <STARTUP>\n          <option name=\"USE_DEFAULT\" value=\"true\" />\n          <option name=\"SCRIPT\" value=\"\" />\n          <option name=\"VM_PARAMETERS\" value=\"\" />\n          <option name=\"PROGRAM_PARAMETERS\" value=\"\" />\n        </STARTUP>\n        <SHUTDOWN>\n          <option name=\"USE_DEFAULT\" value=\"true\" />\n          <option name=\"SCRIPT\" value=\"\" />\n          <option name=\"VM_PARAMETERS\" value=\"\" />\n          <option name=\"PROGRAM_PARAMETERS\" value=\"\" />\n        </SHUTDOWN>\n      </ConfigurationWrapper>\n      <ConfigurationWrapper VM_VAR=\"JAVA_OPTS\" RunnerId=\"Profile\">\n        <option name=\"USE_ENV_VARIABLES\" value=\"true\" />\n        <STARTUP>\n          <option name=\"USE_DEFAULT\" value=\"true\" />\n          <option name=\"SCRIPT\" value=\"\" />\n          <option name=\"VM_PARAMETERS\" value=\"\" />\n          <option name=\"PROGRAM_PARAMETERS\" value=\"\" />\n        </STARTUP>\n        <SHUTDOWN>\n          <option name=\"USE_DEFAULT\" value=\"true\" />\n          <option name=\"SCRIPT\" value=\"\" />\n          <option name=\"VM_PARAMETERS\" value=\"\" />\n          <option name=\"PROGRAM_PARAMETERS\" value=\"\" />\n        </SHUTDOWN>\n      </ConfigurationWrapper>\n      <ConfigurationWrapper VM_VAR=\"JAVA_OPTS\" RunnerId=\"Run\">\n        <option name=\"USE_ENV_VARIABLES\" value=\"true\" />\n        <STARTUP>\n          <option name=\"USE_DEFAULT\" value=\"true\" />\n          <option name=\"SCRIPT\" value=\"\" />\n          <option name=\"VM_PARAMETERS\" value=\"\" />\n          <option name=\"PROGRAM_PARAMETERS\" value=\"\" />\n        </STARTUP>\n        <SHUTDOWN>\n          <option name=\"USE_DEFAULT\" value=\"true\" />\n          <option name=\"SCRIPT\" value=\"\" />\n          <option name=\"VM_PARAMETERS\" value=\"\" />\n          <option name=\"PROGRAM_PARAMETERS\" value=\"\" />\n        </SHUTDOWN>\n      </ConfigurationWrapper>\n      <method v=\"2\">\n        <option name=\"Make\" enabled=\"true\" />\n        <option name=\"BuildArtifacts\" enabled=\"true\">\n          <artifact name=\"SpringMVC:war\" />\n        </option>\n      </method>\n    </configuration>\n  </component>\n  <component name=\"SpellCheckerSettings\" RuntimeDictionaries=\"0\" Folders=\"0\" CustomDictionaries=\"0\" DefaultDictionary=\"application-level\" UseSingleDictionary=\"true\" transferred=\"true\" />\n  <component name=\"SvnConfiguration\">\n    <configuration>C:\\Users\\Administrator\\AppData\\Roaming\\Subversion</configuration>\n  </component>\n  <component name=\"TaskManager\">\n    <task active=\"true\" id=\"Default\" summary=\"Default task\">\n      <changelist id=\"77272ff9-72ae-472a-8b39-1585fecd1d9b\" name=\"Default Changelist\" comment=\"\" />\n      <created>1599269536507</created>\n      <option name=\"number\" value=\"Default\" />\n      <option name=\"presentableId\" value=\"Default\" />\n      <updated>1599269536507</updated>\n      <workItem from=\"1599269541544\" duration=\"23712000\" />\n      <workItem from=\"1599308555490\" duration=\"1268000\" />\n      <workItem from=\"1599312059261\" duration=\"10174000\" />\n      <workItem from=\"1599365270200\" duration=\"2778000\" />\n      <workItem from=\"1599377357994\" duration=\"24000\" />\n      <workItem from=\"1599450688765\" duration=\"3878000\" />\n      <workItem from=\"1654174067965\" duration=\"3275000\" />\n      <workItem from=\"1654187257912\" duration=\"9000\" />\n      <workItem from=\"1654187979026\" duration=\"260000\" />\n      <workItem from=\"1654526623872\" duration=\"1422000\" />\n      <workItem from=\"1654688455988\" duration=\"5848000\" />\n      <workItem from=\"1654995979714\" duration=\"163000\" />\n      <workItem from=\"1654997089047\" duration=\"218000\" />\n      <workItem from=\"1655003425371\" duration=\"91000\" />\n      <workItem from=\"1655003542302\" duration=\"1739000\" />\n      <workItem from=\"1655006495377\" duration=\"101000\" />\n      <workItem from=\"1655121315285\" duration=\"504000\" />\n      <workItem from=\"1655650449793\" duration=\"1970000\" />\n      <workItem from=\"1655715790574\" duration=\"26000\" />\n      <workItem from=\"1655720757501\" duration=\"379000\" />\n      <workItem from=\"1655725714201\" duration=\"2156000\" />\n      <workItem from=\"1655729078859\" duration=\"605000\" />\n      <workItem from=\"1655732701108\" duration=\"95000\" />\n      <workItem from=\"1655812126628\" duration=\"3870000\" />\n      <workItem from=\"1655816860448\" duration=\"899000\" />\n      <workItem from=\"1655829029619\" duration=\"7000\" />\n    </task>\n    <task id=\"LOCAL-00001\" summary=\"1、实现登录验证&#10;2、登录成功后返回菜单JSON到浏览器\">\n      <created>1654527520691</created>\n      <option name=\"number\" value=\"00001\" />\n      <option name=\"presentableId\" value=\"LOCAL-00001\" />\n      <option name=\"project\" value=\"LOCAL\" />\n      <updated>1654527520691</updated>\n    </task>\n    <task id=\"LOCAL-00002\" summary=\"1、添加font的css\">\n      <created>1654670196744</created>\n      <option name=\"number\" value=\"00002\" />\n      <option name=\"presentableId\" value=\"LOCAL-00002\" />\n      <option name=\"project\" value=\"LOCAL\" />\n      <updated>1654670196744</updated>\n    </task>\n    <option name=\"localTasksCounter\" value=\"3\" />\n    <servers />\n  </component>\n  <component name=\"TypeScriptGeneratedFilesManager\">\n    <option name=\"version\" value=\"3\" />\n  </component>\n  <component name=\"Vcs.Log.Tabs.Properties\">\n    <option name=\"TAB_STATES\">\n      <map>\n        <entry key=\"MAIN\">\n          <value>\n            <State />\n          </value>\n        </entry>\n      </map>\n    </option>\n    <option name=\"oldMeFiltersMigrated\" value=\"true\" />\n  </component>\n  <component name=\"VcsManagerConfiguration\">\n    <option name=\"ADD_EXTERNAL_FILES_SILENTLY\" value=\"true\" />\n    <ignored-roots>\n      <path value=\"$PROJECT_DIR$\" />\n    </ignored-roots>\n    <MESSAGE value=\"1、实现登录验证&#10;2、登录成功后返回菜单JSON到浏览器\" />\n    <MESSAGE value=\"1、添加font的css\" />\n    <option name=\"LAST_COMMIT_MESSAGE\" value=\"1、添加font的css\" />\n  </component>\n</project>
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/.idea/workspace.xml b/.idea/workspace.xml
+--- a/.idea/workspace.xml	(revision 1a9d0462e397008e484dd2cb3960e0e660b2faa7)
++++ b/.idea/workspace.xml	(date 1656123586566)
+@@ -9,7 +9,28 @@
+     <option name="autoReloadType" value="ALL" />
+   </component>
+   <component name="ChangeListManager">
+-    <list default="true" id="77272ff9-72ae-472a-8b39-1585fecd1d9b" name="Default Changelist" comment="1、动态显示菜单&#10;2、左侧菜单栏的点击，右侧显示具体内容" />
++    <list default="true" id="77272ff9-72ae-472a-8b39-1585fecd1d9b" name="Default Changelist" comment="1、动态显示菜单&#10;2、左侧菜单栏的点击，右侧显示具体内容">
++      <change afterPath="$PROJECT_DIR$/src/main/java/cn/edu/guet/mapper/PermissionMapper.java" afterDir="false" />
++      <change afterPath="$PROJECT_DIR$/src/main/java/cn/edu/guet/mapper/PermissionMapper.xml" afterDir="false" />
++      <change afterPath="$PROJECT_DIR$/src/main/java/cn/edu/guet/mapper/UserMapper.java" afterDir="false" />
++      <change afterPath="$PROJECT_DIR$/src/main/java/cn/edu/guet/mapper/UserMapper.xml" afterDir="false" />
++      <change afterPath="$PROJECT_DIR$/src/main/java/cn/edu/guet/util/MyBatisSqlSessionFactory.java" afterDir="false" />
++      <change afterPath="$PROJECT_DIR$/src/main/resources/log4j2.xml" afterDir="false" />
++      <change afterPath="$PROJECT_DIR$/src/main/resources/mybatis-config.xml" afterDir="false" />
++      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
++      <change beforePath="$PROJECT_DIR$/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/pom.xml" afterDir="false" />
++      <change beforePath="$PROJECT_DIR$/src/main/java/cn/edu/guet/bean/Permission.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/cn/edu/guet/bean/Permission.java" afterDir="false" />
++      <change beforePath="$PROJECT_DIR$/src/main/java/cn/edu/guet/bean/User.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/cn/edu/guet/bean/User.java" afterDir="false" />
++      <change beforePath="$PROJECT_DIR$/src/main/java/cn/edu/guet/controller/LoginController.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/cn/edu/guet/controller/LoginController.java" afterDir="false" />
++      <change beforePath="$PROJECT_DIR$/src/main/java/cn/edu/guet/dao/IPermissionDao.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/cn/edu/guet/mapper/IPermissionDao.java" afterDir="false" />
++      <change beforePath="$PROJECT_DIR$/src/main/java/cn/edu/guet/dao/IUserDao.java" beforeDir="false" />
++      <change beforePath="$PROJECT_DIR$/src/main/java/cn/edu/guet/dao/impl/PermissionDaoImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/cn/edu/guet/mapper/impl/PermissionDaoImpl.java" afterDir="false" />
++      <change beforePath="$PROJECT_DIR$/src/main/java/cn/edu/guet/dao/impl/UserDaoImpl.java" beforeDir="false" />
++      <change beforePath="$PROJECT_DIR$/src/main/java/cn/edu/guet/service/impl/PermissionServiceImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/cn/edu/guet/service/impl/PermissionServiceImpl.java" afterDir="false" />
++      <change beforePath="$PROJECT_DIR$/src/main/java/cn/edu/guet/service/impl/UserServiceImpl.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/cn/edu/guet/service/impl/UserServiceImpl.java" afterDir="false" />
++      <change beforePath="$PROJECT_DIR$/src/main/webapp/index.html" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/webapp/index.html" afterDir="false" />
++      <change beforePath="$PROJECT_DIR$/src/main/webapp/login.html" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/webapp/login.html" afterDir="false" />
++    </list>
+     <option name="SHOW_DIALOG" value="false" />
+     <option name="HIGHLIGHT_CONFLICTS" value="true" />
+     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+@@ -20,9 +41,9 @@
+       <list>
+         <option value="AnnotationType" />
+         <option value="Jsp File" />
++        <option value="HTML File" />
+         <option value="Interface" />
+         <option value="Class" />
+-        <option value="HTML File" />
+       </list>
+     </option>
+   </component>
+@@ -78,21 +99,21 @@
+     <property name="SHARE_PROJECT_CONFIGURATION_FILES" value="true" />
+     <property name="WebServerToolWindowFactoryState" value="false" />
+     <property name="aspect.path.notification.shown" value="true" />
+-    <property name="last_opened_file_path" value="$PROJECT_DIR$/src/main/java/cn/edu/guet/bean" />
++    <property name="last_opened_file_path" value="$PROJECT_DIR$/src/main/java/cn/edu/guet/mapper" />
+     <property name="nodejs_package_manager_path" value="npm" />
+     <property name="project.structure.last.edited" value="Project" />
+     <property name="project.structure.proportion" value="0.15" />
+     <property name="project.structure.side.proportion" value="0.2" />
+-    <property name="settings.editor.selected.configurable" value="project.propVCSSupport.Mappings" />
++    <property name="settings.editor.selected.configurable" value="vcs.Git" />
+     <property name="vue.rearranger.settings.migration" value="true" />
+   </component>
+   <component name="RecentsManager">
+     <key name="CopyFile.RECENT_KEYS">
++      <recent name="$PROJECT_DIR$/src/main/java/cn/edu/guet/mapper" />
+       <recent name="$PROJECT_DIR$/src/main/java/cn/edu/guet/bean" />
++      <recent name="$PROJECT_DIR$/src/main/resources" />
+       <recent name="$PROJECT_DIR$/src/main/webapp" />
+       <recent name="$PROJECT_DIR$/src/main/java/cn/edu/guet/util" />
+-      <recent name="$PROJECT_DIR$/src/main/java/cn/edu/guet/service" />
+-      <recent name="$PROJECT_DIR$/src/main/java/cn/edu/guet/dao" />
+     </key>
+     <key name="CopyClassDialog.RECENTS_KEY">
+       <recent name="cn.edu.guet.util" />
+@@ -224,7 +245,13 @@
+       <workItem from="1655732701108" duration="95000" />
+       <workItem from="1655812126628" duration="3870000" />
+       <workItem from="1655816860448" duration="899000" />
+-      <workItem from="1655829029619" duration="7000" />
++      <workItem from="1655829029619" duration="252000" />
++      <workItem from="1655832233062" duration="49000" />
++      <workItem from="1655856882672" duration="12000" />
++      <workItem from="1655858874403" duration="1732000" />
++      <workItem from="1655888071504" duration="48000" />
++      <workItem from="1655984900242" duration="597000" />
++      <workItem from="1656119316325" duration="4257000" />
+     </task>
+     <task id="LOCAL-00001" summary="1、实现登录验证&#10;2、登录成功后返回菜单JSON到浏览器">
+       <created>1654527520691</created>
+Index: src/main/java/cn/edu/guet/mapper/UserMapper.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/src/main/java/cn/edu/guet/mapper/UserMapper.java b/src/main/java/cn/edu/guet/mapper/UserMapper.java
+new file mode 100644
+--- /dev/null	(date 1656121492079)
++++ b/src/main/java/cn/edu/guet/mapper/UserMapper.java	(date 1656121492079)
+@@ -0,0 +1,13 @@
++package cn.edu.guet.mapper;
++
++import cn.edu.guet.bean.Permission;
++import cn.edu.guet.bean.User;
++import org.apache.ibatis.annotations.Param;
++
++import java.util.List;
++
++public interface UserMapper {
++    User login(@Param("username") String username, @Param("password") String password);
++
++    List<Permission> getMenuByUserId(String userId);
++}
+Index: src/main/resources/log4j2.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/src/main/resources/log4j2.xml b/src/main/resources/log4j2.xml
+new file mode 100755
+--- /dev/null	(date 1655212788230)
++++ b/src/main/resources/log4j2.xml	(date 1655212788230)
+@@ -0,0 +1,35 @@
++<?xml version="1.0" encoding="UTF-8"?>
++<Configuration status="WARN">
++    <!-- 配置日志信息输出目的地 -->
++    <Appenders>
++        <!-- 输出到控制台 -->
++        <Console name="Console" target="SYSTEM_OUT">
++            <!--配置日志信息的格式 -->
++            <PatternLayout
++                    pattern="%d{HH:mm:ss} [%t] %-5level %logger{36} - %msg%n"/>
++            "/>
++        </Console>
++
++        <!-- 输出到文件，其中有一个append属性，默认为true，即不清空该文件原来的信息，采用添加的方式，若设为false，则会先清空原来的信息，再添加 -->
++        <File name="MyFile" fileName="/Users/liwei/mybatis.log" append="false">
++            <PatternLayout>
++                <!--配置日志信息的格式 -->
++                <pattern>%d{HH:mm:ss} [%t] %-5level %logger{36} - %msg%n</pattern>
++            </PatternLayout>
++        </File>
++
++    </Appenders>
++    <!-- 定义logger,只有定义了logger并引入了appender,appender才会有效 -->
++    <Loggers>
++        <!-- 将业务mapper接口所在的包填写进去,并用在控制台和文件中输出 -->
++        <logger name="cn.edu.guet.mapper" level="TRACE" additivity="false">
++            <AppenderRef ref="Console"/>
++            <AppenderRef ref="MyFile"/>
++        </logger>
++
++        <Root level="INFO">
++            <AppenderRef ref="Console"/>
++            <AppenderRef ref="MyFile"/>
++        </Root>
++    </Loggers>
++</Configuration>
+\ No newline at end of file
+Index: src/main/resources/mybatis-config.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/src/main/resources/mybatis-config.xml b/src/main/resources/mybatis-config.xml
+new file mode 100755
+--- /dev/null	(date 1656029196682)
++++ b/src/main/resources/mybatis-config.xml	(date 1656029196682)
+@@ -0,0 +1,23 @@
++<?xml version="1.0" encoding="utf-8"?>
++<!DOCTYPE configuration PUBLIC "-//mybatis.org//DTD Config 3.0//EN"
++        "http://mybatis.org/dtd/mybatis-3-config.dtd">
++
++<configuration>
++    <typeAliases>
++        <package name="cn.edu.guet.bean"/> <!-- 别名就是类名的小写 -->
++    </typeAliases>
++    <environments default="dev">
++        <environment id="dev">
++            <transactionManager type="JDBC"></transactionManager>
++            <dataSource type="POOLED">
++                <property name="driver" value="com.mysql.cj.jdbc.Driver"/>
++                <property name="url" value="jdbc:mysql://localhost:3306/teashop?useSSL=false&amp;serverTimezone=UTC&amp;allowPublicKeyRetrieval=true"/>
++                <property name="username" value="root"/>
++                <property name="password" value="Li123456"/>
++            </dataSource>
++        </environment>
++    </environments>
++    <mappers>
++        <package name="cn/edu/guet/mapper"/>
++    </mappers>
++</configuration>
+\ No newline at end of file
+Index: src/main/java/cn/edu/guet/mapper/UserMapper.xml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/src/main/java/cn/edu/guet/mapper/UserMapper.xml b/src/main/java/cn/edu/guet/mapper/UserMapper.xml
+new file mode 100755
+--- /dev/null	(date 1656122905998)
++++ b/src/main/java/cn/edu/guet/mapper/UserMapper.xml	(date 1656122905998)
+@@ -0,0 +1,14 @@
++<?xml version="1.0" encoding="UTF-8"?>
++<!DOCTYPE mapper PUBLIC "-//mybatis.org/DTD Mapper 3.0" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
++
++<mapper namespace="cn.edu.guet.mapper.UserMapper">
++    <select id="login" resultType="user">
++        SELECT userid,nick_name as nickName,password,salt FROM users WHERE username=#{username}
++    </select>
++    <select id="getMenuByUserId" resultMap="cn.edu.guet.mapper.PermissionMapper.permissionMap">
++        SELECT p.* FROM user_role ur,role_permission rp,permission p
++        WHERE ur.role_id=rp.role_id
++          AND rp.permission_id=p.permission_id
++          AND user_id=#{value}
++    </select>
++</mapper>
+\ No newline at end of file
+Index: src/main/java/cn/edu/guet/controller/LoginController.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>package cn.edu.guet.controller;\n\nimport cn.edu.guet.bean.Permission;\nimport cn.edu.guet.bean.User;\nimport cn.edu.guet.mvc.annotation.Controller;\nimport cn.edu.guet.mvc.annotation.RequestMapping;\nimport cn.edu.guet.service.IUserService;\nimport cn.edu.guet.service.impl.UserServiceImpl;\n\nimport java.util.List;\n\n@Controller\npublic class LoginController {\n\n    @RequestMapping(\"/login\")\n    public User login(String username, String password) {\n\n        IUserService userService=new UserServiceImpl();\n\n        User user=userService.login(username,password);\n\n        return user;// 返回的JSON数据\n    }\n    @RequestMapping(\"/getUserPermission\")// 相当于之前在web.xml中的url-pattern的内容\n    public List<Permission> getUserPermission(String userId){\n        IUserService userService=new UserServiceImpl();\n        return userService.getMenuByUserId(userId);\n    }\n}\n
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/src/main/java/cn/edu/guet/controller/LoginController.java b/src/main/java/cn/edu/guet/controller/LoginController.java
+--- a/src/main/java/cn/edu/guet/controller/LoginController.java	(revision 1a9d0462e397008e484dd2cb3960e0e660b2faa7)
++++ b/src/main/java/cn/edu/guet/controller/LoginController.java	(date 1656120862057)
+@@ -18,7 +18,7 @@
+         IUserService userService=new UserServiceImpl();
+ 
+         User user=userService.login(username,password);
+-
++        System.out.println("LoginController: "+user);
+         return user;// 返回的JSON数据
+     }
+     @RequestMapping("/getUserPermission")// 相当于之前在web.xml中的url-pattern的内容

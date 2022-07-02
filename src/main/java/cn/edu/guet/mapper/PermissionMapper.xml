@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org/DTD Mapper 3.0" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="cn.edu.guet.mapper.PermissionMapper">
+
+    <resultMap id="permissionMap" type="cn.edu.guet.bean.Permission">
+        <!-- 菜单自身的信息 -->
+        <id property="id" column="permission_id"/>
+        <result property="name" column="permission_name"/>
+        <result property="pId" column="pid"/>
+        <result property="url" column="url"/>
+        <result property="icon" column="icon"/>
+        <result property="target" column="target"/>
+        <result property="isParent" column="isParent"/>
+    </resultMap>
+    <insert id="addpermission" parameterType="cn.edu.guet.bean.Permission">
+        INSERT INTO permission (permission_id, pid, permission_name, url, icon, target, isParent)
+        VALUES (#{id},#{pId},#{name},#{url},#{icon},#{target},#{isParent});
+    </insert>
+    <update id="updatepermission" parameterType="cn.edu.guet.bean.Permission">
+        UPDATE permission
+        SET permission_name = #{name},url = #{url},icon = #{icon}
+        WHERE permission_id = #{id}
+    </update>
+    <delete id="deletepermission">
+        DELETE FROM permission WHERE permission_name = #{value}
+    </delete>
+    <select id="permissionList" resultMap="cn.edu.guet.mapper.PermissionMapper.permissionMap">
+        SELECT * FROM permission
+    </select>
+    <select id="getPermissionid" resultType="java.lang.String">
+        SELECT permission_id FROM permission WHERE permission_name = #{value}
+    </select>
+
+
+</mapper>

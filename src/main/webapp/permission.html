@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>权限列表</title>
+    <script src="./js/jquery.js"></script>
+    <style>
+        table {
+            border: 1px solid black;
+            border-collapse: collapse;
+            width: 100%;
+        }
+
+        th, td {
+            border: 1px solid black;
+        }
+
+        #under {
+            position: absolute;
+            z-index: -1;
+        }
+
+        #above,#above1 {
+            list-style: none;
+            opacity: 1;
+            z-index: 2;
+            display: none;
+            background-color: #ececec;
+            margin: auto auto;
+            width: 358px;
+            border-radius: 5px;
+            padding: 100px 50px;
+            position: relative;
+        }
+
+        .form-wrapper {
+            left: 50%;
+            top: 50%;
+        }
+
+        /*.container {*/
+        /*    opacity: 0.5;*/
+        /*    z-index: 1;*/
+        /*    height: 100%;*/
+        /*    width: 100%;*/
+        /*    background-color: #595656;*/
+        /*}*/
+    </style>
+</head>
+<body>
+<div id="under">
+    <input type="text"><button>查询</button>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<button onclick="f1()">新增</button>
+    <table id="tb">
+        <caption>权限数据</caption>
+        <tr>
+            <th>菜单ID</th>
+            <th>菜单名称</th>
+            <th>菜单地址</th>
+            <th>菜单图标</th>
+            <th>操作</th>
+        </tr>
+    </table>
+</div>
+<div class="container">
+    <!--    编辑窗口-->
+    <div id="above">
+        <div class="form-wrapper">
+            <label for="permissionname">菜单名字：</label>
+            <input type="text" name="permissionname" id="permissionname">
+            <br/>
+            <label for="url">菜单地址：</label>
+            <input type="text" name="url" id="url">
+            <br/>
+            <label for="icon">菜单图标：</label>
+            <input type="text" name="icon" id="icon">
+            <br/>
+            <label for="target">显示位置：</label>
+            <input type="text" name="target" id="target">
+            <br/>
+            <label for="isParent">是否父级：</label>
+            <input type="text" name="isParent" id="isParent" PLACEHOLDER="填Y or N" value="">
+            <br/>
+            <label for="pidname">父级菜单：</label>
+            <input type="text" name="pidname" id="pidname">
+            <br/>
+            <button id="save" onclick="addpermission()">保存</button>
+            <button id="cancel" onclick="f2()">取消</button>
+        </div>
+    </div>
+    <!--    修改窗口-->
+    <div id="above1">
+        <div class="form-wrapper">
+            <label for="permissionid">菜单ID：</label>
+            <label id="permissionid"></label>
+            <br/>
+            <label for="pname2">菜单名字：</label>
+            <input type="text" name="pname" id="pname2">
+            <br/>
+            <label for="url">菜单地址：</label>
+            <input type="text" name="url" id="url2">
+            <br/>
+            <label for="icon">菜单图标：</label>
+            <input type="text" name="icon" id="icon2">
+            <br/>
+            <button id="save2" onclick="updatepermission()">保存</button>
+            <button id="cancel2" onclick="f2()">取消</button>
+        </div>
+    </div>
+</div>
+
+<script>
+
+
+    //删除菜单
+    $(function () {
+        $("#tb").on("click", "#delect", function (event) {
+            var permissionname = $(this).closest("tr").find("td").eq(1).text();
+            if(confirm("是否删除菜单："+permissionname)){
+                $.ajax({
+                    type: "GET",
+                    url: "deletepermission.do",
+                    data: {"permissionname": permissionname},
+                    dataType: "json",
+                    success: function (result) {
+                        console.log(result);
+                        alert(result);
+                    }
+                });
+            }
+
+        });
+    });
+
+    //清空窗口数据
+    function empty() {
+        document.getElementById("permissionname").value = "";
+        document.getElementById("url").value = "";
+        document.getElementById("icon").value = "";
+        document.getElementById("target").value = "";
+        $("#isParent").val("")
+        document.getElementById("isParent").value = "";
+        document.getElementById("pidname").value = "";
+        document.getElementById("pname2").value = "";
+        document.getElementById("url2").value = "";
+        document.getElementById("icon2").value = "";
+        $("#permissionid").html('');
+    }
+
+    //打开添加窗口
+    function f1() {
+        document.getElementById("above").style.display = 'list-item';
+    }
+
+    //关闭窗口
+    function f2() {
+        document.getElementById("above").style.display = 'none';
+        document.getElementById("above1").style.display = 'none';
+        empty();
+    }
+
+    //获取菜单列表
+    $.ajax({
+        type: "GET",
+        url: "permissionList.do",
+        dataType: "json",
+        success: function (data) {
+            console.log('服务器返回的数据：',data);
+            $.each(data,function(index,menu){
+                var $tr=$("<tr>" +
+                    "<td>"+menu.id+"</td>"+
+                    "<td>"+menu.name+"</td>"+
+                    "<td>"+menu.url+"</td>"+
+                    "<td>"+menu.icon+"</td>"+
+                    "<td><input type='button' id='update' value='修改' />&nbsp;&nbsp;&nbsp;&nbsp;<input type='button' id='delect' value='删除' /></td>" +
+                    "</tr>");
+                $("#tb").append($tr);
+            })
+        }
+    });
+
+    //点击修改按钮进行的操作
+    $(function () {
+        $("#tb").on("click", "#update", function (event) {
+            $("#permissionid").append($(this).closest("tr").find("td").eq(0).text())
+            document.getElementById("pname2").value=$(this).closest("tr").find("td").eq(1).text();
+            document.getElementById("url2").value=$(this).closest("tr").find("td").eq(2).text();
+            document.getElementById("icon2").value=$(this).closest("tr").find("td").eq(3).text();
+            document.getElementById("above1").style.display = 'list-item';
+        });
+    });
+    //添加菜单
+    function addpermission() {
+        var permissionname = document.getElementById("permissionname").value;
+        var url = document.getElementById("url").value;
+        var icon = document.getElementById("icon").value;
+        var target = document.getElementById("target").value;
+        var isParent = document.getElementById("isParent").value;
+        var pidname = document.getElementById("pidname").value;
+        if(confirm("是否添加菜单"+permissionname)){
+            $.ajax({
+                type: "GET",
+                url: "addpermission.do",
+                data: {
+                    "permissionname": permissionname,
+                    "url": url,
+                    "icon": icon,
+                    "target": target,
+                    "isParent": isParent,
+                    "pidname": pidname
+                },
+                dataType: "json",
+                success: function (result) {
+                    console.log(result);
+                    alert(result);
+                }
+            })
+            f2();
+        }
+
+
+    }
+
+    //修改菜单
+    function updatepermission() {
+        var permissionname = document.getElementById("pname2").value;
+        var url2 = document.getElementById("url2").value;
+        var icon2 = document.getElementById("icon2").value;
+        var permissionid =$("#permissionid").text();
+        if("是否修改菜单"+confirm(permissionid)){
+            $.ajax({
+                type: "GET",
+                url: "updatepermission.do",
+                data: {
+                    "permissionname": permissionname,
+                    "url": url2,
+                    "icon": icon2,
+                    "permissionid": permissionid,
+                },
+                dataType: "json",
+                success: function (result) {
+                    console.log(result);
+                    alert(result);
+                }
+            })
+            f2();
+        }
+
+    }
+</script>
+</body>
+</html>

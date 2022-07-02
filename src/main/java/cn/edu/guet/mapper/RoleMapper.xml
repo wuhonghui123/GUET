@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org/DTD Mapper 3.0" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="cn.edu.guet.mapper.RoleMapper">
+    <resultMap id="RoleMap" type="Role">
+        <!-- 菜单自身的信息 -->
+        <id property="roleid" column="role_id"/>
+        <result property="rolename" column="role_name"/>
+    </resultMap>
+    <insert id="addrole">
+        INSERT INTO role(role_name,role_id)VALUES(#{rolename},#{roleid})
+    </insert>
+    <update id="updaterole">
+        update role set role_name = #{rolename} where role_id = #{roleid}
+    </update>
+
+    <delete id="deleteRoleById">
+        DELETE FROM role WHERE role_id=#{value};
+    </delete>
+    <select id="getroleid" resultType="java.lang.String">
+        SELECT role_id from role where role_name=#{value};
+    </select>
+    <select id="getRoleList" resultMap="cn.edu.guet.mapper.RoleMapper.RoleMap">
+        select * from role
+    </select>
+</mapper>
