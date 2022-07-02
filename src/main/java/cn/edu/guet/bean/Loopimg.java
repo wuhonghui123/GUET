@@ -30,13 +30,4 @@ public class Loopimg {
     private String loopimgid;
     private String loopimgurl;
 
-    public Timestamp getUpadtetime() {
-        return upadtetime;
-    }
-
-    public void setUpadtetime(Timestamp upadtetime) {
-        this.upadtetime = upadtetime;
-    }
-
-    private Timestamp upadtetime;
 }

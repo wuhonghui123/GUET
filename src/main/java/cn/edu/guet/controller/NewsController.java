@@ -1,5 +1,6 @@
 package cn.edu.guet.controller;
 
+import cn.edu.guet.bean.Loopimg;
 import cn.edu.guet.bean.News;
 import cn.edu.guet.mvc.annotation.Controller;
 import cn.edu.guet.mvc.annotation.RequestMapping;
@@ -27,13 +28,8 @@ import java.util.List;
 public class NewsController {
 
     AutowiredAnnotationBeanPostProcessor d;
-
-    private INewsService newsServiceImpl;
-
     @Autowired
-    public void setNewsServiceImpl(IUserService userServiceImpl){
-        this.newsServiceImpl=newsServiceImpl;
-    }
+    private INewsService newsServiceImpl;
 
     /*
     一个负责文件上传
@@ -89,8 +85,9 @@ public class NewsController {
             System.out.print("the enctype must be multipart/form-data");
         }
     }
+
     @RequestMapping("/news")
-    public void news(HttpServletRequest request){
+    public void news(HttpServletRequest request) {
         try {
             request.setCharacterEncoding("UTF-8");
         } catch (UnsupportedEncodingException e) {
@@ -99,9 +96,18 @@ public class NewsController {
         String newsContent = request.getParameter("mytxtIntro");
         System.out.println("富文本内容：" + newsContent);
     }
+
     @RequestMapping("/newsList")
-    public List<News> newsList(){
-        newsServiceImpl.test();
-        return null;
+    public List<News> newsList() {
+        return newsServiceImpl.getnewsList();
+    }
+
+    @RequestMapping("/newsclass")
+    public List<News> newsclass(String newsclass) {
+        return newsServiceImpl.newsclass(newsclass);
+    }
+    @RequestMapping("/getloopimgList")
+    public List<Loopimg> getloopimgList() {
+        return newsServiceImpl.getloopimgList();
     }
 }

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org/DTD Mapper 3.0" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.edu.guet.mapper.NewsMapper">
+    <select id="newsclass" resultType="cn.edu.guet.bean.News">
+        SELECT * FROM news WHERE news_class = #{news_class} ORDER BY update_time DESC LIMIT 0,1000
+    </select>
+
+    <select id="newsList" resultType="cn.edu.guet.bean.News">
+        SELECT * FROM news ORDER BY update_time DESC LIMIT 0,1000;
+    </select>
+</mapper>
