@@ -3,7 +3,6 @@ package cn.edu.guet.controller;
 import cn.edu.guet.bean.User;
 import cn.edu.guet.mvc.annotation.Controller;
 import cn.edu.guet.mvc.annotation.RequestMapping;
-import cn.edu.guet.service.IRoleService;
 import cn.edu.guet.service.IUserService;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -13,8 +12,6 @@ import java.util.List;
 public class UserController {
     @Autowired
     private IUserService userServiceImpl;
-    @Autowired
-    private IRoleService roleServiceImpl;
 
     @RequestMapping("/userList")
     public List<User> userList() {

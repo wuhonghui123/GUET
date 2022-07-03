@@ -9,10 +9,10 @@
         http://www.springframework.org/schema/aop https://www.springframework.org/schema/aop/spring-aop.xsd
         http://www.springframework.org/schema/tx https://www.springframework.org/schema/tx/spring-tx.xsd">
 
-    <aop:aspectj-autoproxy proxy-target-class="true"></aop:aspectj-autoproxy>
+    <aop:aspectj-autoproxy proxy-target-class="true"/>
     <!-- cglib -->
 
-    <context:property-placeholder location="classpath:db.properties"></context:property-placeholder>
+    <context:property-placeholder location="classpath:db.properties"/>
 
     <!--
     <bean id="dataSource" class="org.springframework.jdbc.datasource.DriverManagerDataSource">
@@ -40,29 +40,33 @@
     </bean>
 
     <bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean" lazy-init="false">
-        <property name="dataSource" ref="dataSource"></property>
-        <property name="typeAliasesPackage" value="cn.edu.guet.bean"></property>
-        <property name="configLocation" value="classpath:mybatis-config.xml"></property>
+        <property name="dataSource" ref="dataSource"/>
+        <property name="typeAliasesPackage" value="cn.edu.guet.bean"/>
+        <property name="configLocation" value="classpath:mybatis-config.xml"/>
     </bean>
 
     <!-- Spring容器启动的时候，就不会主动去创建这个对象，只有你通过ctx.getBean("sss")的时候，才会去创建对象 -->
 
-    <context:component-scan base-package="cn.edu.guet"></context:component-scan>
+    <context:component-scan base-package="cn.edu.guet"/>
 
     <!-- Spring事务配置 -->
     <bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
-        <property name="dataSource" ref="dataSource"></property>
+        <property name="dataSource" ref="dataSource"/>
     </bean>
     <!-- 基于注解的配置 -->
-    <tx:annotation-driven></tx:annotation-driven>
-<!--    <aop:config>-->
-<!--        <aop:pointcut id="ptCut" expression="execution(* cn.edu.guet.service.*.*(..))"></aop:pointcut>-->
-<!--        <aop:advisor advice-ref="txAdvice" pointcut-ref="ptCut"></aop:advisor>-->
-<!--    </aop:config>-->
+    <tx:annotation-driven/>
 
-<!--    <tx:advice transaction-manager="transactionManager" id="txAdvice">-->
-<!--        <tx:attributes>-->
-<!--            <tx:method name="delete*" no-rollback-for="java.lang.RuntimeException"/>-->
-<!--        </tx:attributes>-->
-<!--    </tx:advice>-->
+    <aop:config>
+        <aop:pointcut id="ptCut" expression="execution(* cn.edu.guet.service.*.*(..))"/>
+        <aop:advisor advice-ref="txAdvice" pointcut-ref="ptCut"/>
+    </aop:config>
+
+    <tx:advice transaction-manager="transactionManager" id="txAdvice">
+        <tx:attributes>
+            <tx:method name="delete*" no-rollback-for="java.lang.RuntimeException"/>
+            <tx:method name="update*" no-rollback-for="java.lang.RuntimeException"/>
+            <tx:method name="add*" no-rollback-for="java.lang.RuntimeException"/>
+            <tx:method name="*" read-only="true"/>
+        </tx:attributes>
+    </tx:advice>
 </beans>
